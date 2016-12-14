@@ -148,6 +148,9 @@ class TealiumModulesManager : NSObject {
         
         let module = type.init(delegate: self)
         
+        if module.moduleConfig().enabled == false {
+            return
+        }
         modules.append(module)
     
     }

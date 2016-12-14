@@ -13,13 +13,15 @@ class MasterViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-
-        let extraData : [String:AnyObject] = ["Key" : "value" as AnyObject]
-
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        let extraData : [String:AnyObject] = ["link_id" : "test" as AnyObject]
+        
         TealiumHelper.sharedInstance().track(title: "test",
                                              data: extraData)
-    
-        
     }
     
     @IBAction func unwindInMaster(_ segue: UIStoryboardSegue)  {
