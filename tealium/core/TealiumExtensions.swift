@@ -20,6 +20,25 @@ extension String {
     }
 }
 
+extension URLRequest {
+    
+    func asDictionary() -> [String : Any] {
+        
+        var result = [String:Any]()
+        
+        result["allowsCellularAccess"] = self.allowsCellularAccess ? "true" : "false"
+        result["allHTTPHeaderFields"] = self.allHTTPHeaderFields
+        result["cachePolicy"] = self.cachePolicy
+        result["url"] = self.url?.absoluteString
+        result["timeoutInterval"] = self.timeoutInterval
+        result["httpMethod"] = self.httpMethod
+        result["httpShouldHandleCookies"] = self.httpShouldHandleCookies
+        result["httpShouldUsePipelining"] = self.httpShouldUsePipelining
+        
+        return result
+    }
+}
+
 /**
  Extend the use of += operators to dictionaries.
 */
@@ -35,3 +54,5 @@ public func += <K, V> (left: inout [K:V], right: [K:V]) {
 public func ==(lhs: [String: AnyObject], rhs: [String: AnyObject] ) -> Bool {
     return NSDictionary(dictionary: lhs).isEqual(to: rhs)
 }
+
+

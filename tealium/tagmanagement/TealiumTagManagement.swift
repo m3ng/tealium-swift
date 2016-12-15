@@ -185,6 +185,8 @@ extension TealiumTagManagement : WKNavigationDelegate {
     public func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         
         
+        // TODO: Contains more info than just header response for collect.
+//        let requestInfo = navigationAction.request
         decisionHandler(.allow)
         
     }
@@ -195,6 +197,10 @@ extension TealiumTagManagement : WKNavigationDelegate {
     
     public func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
         
+        
+    }
+    
+    public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         
     }
 }
