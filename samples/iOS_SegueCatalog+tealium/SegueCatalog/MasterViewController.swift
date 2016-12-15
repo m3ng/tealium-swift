@@ -13,14 +13,19 @@ class MasterViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        let extraData : [String:AnyObject] = ["link_id" : "launchtest" as AnyObject]
+        
+        TealiumHelper.sharedInstance().track(title: "launchtest",
+                                             data: extraData)
+        
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        let extraData : [String:AnyObject] = ["link_id" : "test" as AnyObject]
+        let extraData : [String:AnyObject] = ["link_id" : "viewtest" as AnyObject]
         
-        TealiumHelper.sharedInstance().track(title: "test",
+        TealiumHelper.sharedInstance().track(title: "viewtest",
                                              data: extraData)
     }
     
