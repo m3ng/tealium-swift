@@ -10,6 +10,11 @@ import Foundation
 
 enum TealiumTagManagementKey {
     static let moduleName = "tagmanagement"
+    static let payload = "payload"
+    static let responseHeader = "response_headers"
+    static let dispatchService = "dispatch_service"
+    static let jsCommand = "js_command"
+    static let jsResult = "js_result"
 }
 
 enum TealiumTagManagementError : Error {
@@ -72,9 +77,7 @@ class TealiumTagManagementModule : TealiumModule {
         addToQueue(track: track)
 
         if tagManagement.isWebViewReady() == false {
-            
-            // TODO: Queue notice
-            
+                        
             self.didFinishTrack(track)
             return
         }
@@ -87,18 +90,10 @@ class TealiumTagManagementModule : TealiumModule {
         
         tagManagement.track(track.data,
                             completion:{(success, info, error) in
-                                
-            var newInfo = [String:AnyObject]()
-            if let trackInfo = track.info {
-                newInfo += trackInfo
-            }
-            newInfo += info
-            
-            let newTrack = TealiumTrack(data: track.data,
-                                        info: newInfo,
-                                        completion: track.completion)
-            
-            self.didFinishTrack(newTrack)
+                            
+            track.completion?(success, info, error)
+
+            self.didFinishTrack(track)
             
         })
         

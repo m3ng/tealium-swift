@@ -70,42 +70,49 @@ public class TealiumTagManagement : NSObject {
         
     }
     
-    func track(_ data: [String:AnyObject],
-               completion: ((_ success:Bool, _ info: [String:AnyObject], _ error: Error?)->Void)?) {
+    func track(_ data: [String:Any],
+               completion: ((_ success:Bool, _ info: [String:Any], _ error: Error?)->Void)?) {
     
         let sanitizedData = sanitized(dictionary: data)
-        
-        var legacyType = "link"
-        if sanitizedData[TealiumKey.eventType] == TealiumTrackType.view.description() {
-            legacyType = "view"
-        }
-        
         guard let encodedPayloadString = jsonEncode(sanitizedDictionary: sanitizedData) else {
-            
-            // TODO: error for unencodable data
-            completion?(false, [:], TealiumTagManagementError.couldNotJSONEncodeData)
+            completion?(false,
+                        ["original_payload":data, "sanitized_payload":sanitizedData],
+                        TealiumTagManagementError.couldNotJSONEncodeData)
             return
         }
     
+        let legacyType = getLegacyType(fromData: sanitizedData)
         let javascript = "utag.track('\(legacyType)',\(encodedPayloadString))"
         
-        print("TealiumTagManagmenet: track: Javascript: \(javascript)")
-        
         DispatchQueue.main.async {
-            
+        
             // Fine example of why label removals from completion handlers were such a great idea.
             self.webView.evaluateJavaScript(javascript, completionHandler: {(anything, error) in
+
+                var info = [String:Any]()
+                info[TealiumTagManagementKey.dispatchService] = TealiumTagManagementKey.moduleName
+                info[TealiumTagManagementKey.jsCommand] = javascript
+                info += [TealiumTagManagementKey.payload : data]
                 
-                //TODO: Populate info or error depending on response.
-                print("Anything returned: \(anything)")
-                print("Error returned: \(error)")
+                var result = ""
+                if anything != nil {
+                    result = "\(anything!)"
+                }
+                info += [TealiumTagManagementKey.jsResult : result]
                 
-                // TODO: header response?
-                
-                completion?(true, [:], nil)
+                completion?(true, info, error)
             })
         }
         
+    }
+    
+    func getLegacyType(fromData: [String:Any]) -> String {
+        
+        var legacyType = "link"
+        if fromData[TealiumKey.eventType] as? String == TealiumTrackType.view.description() {
+            legacyType = "view"
+        }
+        return legacyType
     }
     
     override public func observeValue(forKeyPath keyPath: String?,
@@ -157,7 +164,7 @@ public class TealiumTagManagement : NSObject {
     /**
      Stringifies dictionary values
      */
-    internal func sanitized(dictionary:[String:AnyObject]) -> [String:String]{
+    internal func sanitized(dictionary:[String:Any]) -> [String:String]{
         
         var clean = [String: String]()
         
