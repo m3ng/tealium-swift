@@ -9,6 +9,7 @@
 import Foundation
 
 enum TealiumTagManagementKey {
+    static let estimatedProgress = "estimatedProgress"
     static let moduleName = "tagmanagement"
     static let payload = "payload"
     static let responseHeader = "response_headers"
@@ -18,6 +19,7 @@ enum TealiumTagManagementKey {
 }
 
 enum TealiumTagManagementError : Error {
+    case couldNotCreateURL
     case couldNotLoadURL
     case couldNotJSONEncodeData
 }
@@ -50,18 +52,25 @@ class TealiumTagManagementModule : TealiumModule {
     
     override func enable(config: TealiumConfig) {
         
+        // TODO: Check if Tag Management should be enabled.
         let account = config.account
         let profile = config.profile
         let environment = config.environment
-        tagManagement.delegate = self
-        if tagManagement.enable(forAccount: account,
-                                profile: profile,
-                                environment: environment) == false {
-            didFailToEnable(config: config,
-                            error: TealiumTagManagementError.couldNotLoadURL)
-        }
         
-        didFinishEnable(config: config)
+        tagManagement.delegate = self
+        tagManagement.enable(forAccount: account,
+                             profile: profile,
+                             environment: environment,
+                             completion: {(success, error) in
+        
+            if success == false {
+                self.didFailToEnable(config: config,
+                                error: TealiumTagManagementError.couldNotLoadURL)
+                return
+            }
+            self.didFinishEnable(config: config)
+                                
+        })
         
     }
     

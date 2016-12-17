@@ -18,7 +18,7 @@ public class TealiumTagManagement : NSObject {
     
     static let defaultUrlStringPrefix = "https://tags.tiqcdn.com/utag"
 
-    let webView = WKWebView()
+    var webView : WKWebView?
     var account : String = ""
     var profile : String = ""
     var environment : String = ""
@@ -39,55 +39,71 @@ public class TealiumTagManagement : NSObject {
     }()
     
     // MARK: PUBLIC
-    
-    
-    /// Load the webview
+
+    /// Enable webview system.
+    ///
+    /// - Parameters:
+    ///   - forAccount: Tealium account.
+    ///   - profile: Tealium profile.
+    ///   - environment: Tealium environment.
+    /// - Returns: Boolean if a webview is ready to start.
     func enable(forAccount: String,
                 profile: String,
-                environment: String) -> Bool {
+                environment: String,
+                completion: ((_ success:Bool, _ error: Error?)-> Void)?) {
         
+        if webView != nil {
+            // WebView already enabled.
+            return
+        }
         
         self.account = forAccount
         self.profile = profile
         self.environment = environment
         
         guard let request = self.urlRequest else {
-            return false
+            completion?(false, TealiumTagManagementError.couldNotCreateURL)
+            return
         }
         
-        webView.navigationDelegate = self
-        webView.load(request)
-        
-        webView.addObserver(self, forKeyPath: "estimatedProgress", options: .new, context: nil)
+        webView = WKWebView()
+        webView?.navigationDelegate = self
+        let _ = webView?.load(request)
+        webView?.addObserver(self, forKeyPath: TealiumTagManagementKey.estimatedProgress, options: .new, context: nil)
 
-        
-        return true
+        completion?(true, nil)
     }
     
     func disable() {
         
-        // TODO:
+        webView?.stopLoading()
+        webView?.navigationDelegate = nil
+        webView = nil
         
     }
     
     func track(_ data: [String:Any],
                completion: ((_ success:Bool, _ info: [String:Any], _ error: Error?)->Void)?) {
     
-        let sanitizedData = sanitized(dictionary: data)
-        guard let encodedPayloadString = jsonEncode(sanitizedDictionary: sanitizedData) else {
+        guard let webView = self.webView else {
+            return
+        }
+        
+        let sanitizedData = TealiumTagManagement.sanitized(dictionary: data)
+        guard let encodedPayloadString = TealiumTagManagement.jsonEncode(sanitizedDictionary: sanitizedData) else {
             completion?(false,
                         ["original_payload":data, "sanitized_payload":sanitizedData],
                         TealiumTagManagementError.couldNotJSONEncodeData)
             return
         }
     
-        let legacyType = getLegacyType(fromData: sanitizedData)
+        let legacyType = TealiumTagManagement.getLegacyType(fromData: sanitizedData)
         let javascript = "utag.track('\(legacyType)',\(encodedPayloadString))"
         
         DispatchQueue.main.async {
         
             // Fine example of why label removals from completion handlers were such a great idea.
-            self.webView.evaluateJavaScript(javascript, completionHandler: {(anything, error) in
+            webView.evaluateJavaScript(javascript, completionHandler: {(anything, error) in
 
                 var info = [String:Any]()
                 info[TealiumTagManagementKey.dispatchService] = TealiumTagManagementKey.moduleName
@@ -106,7 +122,7 @@ public class TealiumTagManagement : NSObject {
         
     }
     
-    func getLegacyType(fromData: [String:Any]) -> String {
+    class func getLegacyType(fromData: [String:Any]) -> String {
         
         var legacyType = "link"
         if fromData[TealiumKey.eventType] as? String == TealiumTrackType.view.description() {
@@ -120,7 +136,7 @@ public class TealiumTagManagement : NSObject {
                                       change: [NSKeyValueChangeKey : Any]?,
                                       context: UnsafeMutableRawPointer?) {
         
-        if keyPath == "estimatedProgress" {
+        if keyPath == TealiumTagManagementKey.estimatedProgress {
             if change?[NSKeyValueChangeKey.newKey] as? Double == 1.0 {
                 delegate?.TagManagementWebViewFinishedLoading()
             }
@@ -130,12 +146,17 @@ public class TealiumTagManagement : NSObject {
     }
     
     deinit {
-        self.removeObserver(self, forKeyPath: "estimatedProgress")
+        self.removeObserver(self, forKeyPath: TealiumTagManagementKey.estimatedProgress)
     }
     
     // MARK: INTERNAL
     
     func isWebViewReady() -> Bool {
+        
+        guard let webView = self.webView else {
+            return false
+        }
+        
         if webView.isLoading == true {
             return false
         }
@@ -148,7 +169,7 @@ public class TealiumTagManagement : NSObject {
     }
 
     
-    internal func jsonEncode(sanitizedDictionary:[String:String]) -> String? {
+    internal class func jsonEncode(sanitizedDictionary:[String:String]) -> String? {
         
         do {
             let jsonData = try JSONSerialization.data(withJSONObject: sanitizedDictionary,
@@ -164,7 +185,7 @@ public class TealiumTagManagement : NSObject {
     /**
      Stringifies dictionary values
      */
-    internal func sanitized(dictionary:[String:Any]) -> [String:String]{
+    internal class func sanitized(dictionary:[String:Any]) -> [String:String]{
         
         var clean = [String: String]()
         
