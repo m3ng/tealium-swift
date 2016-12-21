@@ -22,6 +22,7 @@ enum TealiumTagManagementError : Error {
     case couldNotCreateURL
     case couldNotLoadURL
     case couldNotJSONEncodeData
+    case webViewNotYetReady
 }
 
 extension Tealium {
@@ -84,9 +85,9 @@ class TealiumTagManagementModule : TealiumModule {
     override func track(_ track: TealiumTrack) {
         
         addToQueue(track: track)
-
+        
         if tagManagement.isWebViewReady() == false {
-                        
+            // Not ready to send, move on.
             self.didFinishTrack(track)
             return
         }
@@ -99,12 +100,11 @@ class TealiumTagManagementModule : TealiumModule {
         
         tagManagement.track(track.data,
                             completion:{(success, info, error) in
-                            
+                                        
             track.completion?(success, info, error)
-
             self.didFinishTrack(track)
-            
-        })
+                                
+        }) 
         
     }
     

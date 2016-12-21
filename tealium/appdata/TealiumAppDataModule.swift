@@ -18,7 +18,7 @@ class TealiumAppDataModule : TealiumModule {
         return TealiumModuleConfig(name: TealiumAppDataKey.moduleName,
                                    priority: 500,
                                    build: 1,
-                                   enabled: true)
+                                   enabled: false)
     }
     
     override func enable(config: TealiumConfig) {

@@ -57,9 +57,9 @@ class TealiumCollectModule : TealiumModule {
 
     override func moduleConfig() -> TealiumModuleConfig {
         return TealiumModuleConfig(name: TealiumCollectKey.moduleName,
-                                   priority: 1000,
+                                   priority: 2000,
                                    build: 1,
-                                   enabled: true)
+                                   enabled: false)
     }
     
     override func enable(config:TealiumConfig) {
