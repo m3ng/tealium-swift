@@ -58,42 +58,50 @@ class TealiumTagManagementModule : TealiumModule {
         let profile = config.profile
         let environment = config.environment
         
-        tagManagement.delegate = self
-        tagManagement.enable(forAccount: account,
-                             profile: profile,
-                             environment: environment,
-                             completion: {(success, error) in
-        
-            if success == false {
-                self.didFailToEnable(config: config,
-                                error: TealiumTagManagementError.couldNotLoadURL)
-                return
-            }
-            self.didFinishEnable(config: config)
-                                
-        })
+        DispatchQueue.main.async {
+
+            self.tagManagement.delegate = self
+            self.tagManagement.enable(forAccount: account,
+                                 profile: profile,
+                                 environment: environment,
+                                 completion: {(success, error) in
+            
+                if success == false {
+                    self.didFailToEnable(config: config,
+                                    error: TealiumTagManagementError.couldNotLoadURL)
+                    return
+                }
+                self.didFinishEnable(config: config)
+                                    
+            })
+        }
         
     }
     
     override func disable() {
         
-        tagManagement.disable()
-        
+        DispatchQueue.main.async {
+
+            self.tagManagement.disable()
+
+        }
         didFinishDisable()
     }
     
     override func track(_ track: TealiumTrack) {
         
-        addToQueue(track: track)
-        
-        if tagManagement.isWebViewReady() == false {
-            // Not ready to send, move on.
-            self.didFinishTrack(track)
-            return
+        DispatchQueue.main.async {
+            
+            self.addToQueue(track: track)
+            
+            if self.tagManagement.isWebViewReady() == false {
+                // Not ready to send, move on.
+                self.didFinishTrack(track)
+                return
+            }
+            
+            self.sendQueue()
         }
-        
-        sendQueue()
-        
     }
     
     func send(_ track: TealiumTrack) {
@@ -134,8 +142,11 @@ extension TealiumTagManagementModule : TealiumTagManagementDelegate {
     
     func TagManagementWebViewFinishedLoading() {
         
-        sendQueue()
-        
+        DispatchQueue.main.async {
+            
+            self.sendQueue()
+            
+        }
     }
     
 }

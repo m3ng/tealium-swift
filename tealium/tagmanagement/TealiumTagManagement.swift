@@ -6,7 +6,7 @@
 //  Copyright © 2016 Apple, Inc. All rights reserved.
 //
 
-import WebKit
+import UIKit
 
 protocol TealiumTagManagementDelegate {
     
@@ -18,13 +18,15 @@ public class TealiumTagManagement : NSObject {
     
     static let defaultUrlStringPrefix = "https://tags.tiqcdn.com/utag"
 
-    var webView : WKWebView?
+    var webView : UIWebView?
+    var didWebViewFinishLoading = false
     var areObservingWebView = false
     var account : String = ""
     var profile : String = ""
     var environment : String = ""
     var urlString : String?
     var delegate : TealiumTagManagementDelegate?
+    var completion : ((Bool, Error?)->Void)?
     
     lazy var defaultUrlString : String = {
         let urlString = "\(defaultUrlStringPrefix)/\(self.account)/\(self.profile)/\(self.environment)/mobile.html?"
@@ -53,7 +55,8 @@ public class TealiumTagManagement : NSObject {
                 environment: String,
                 completion: ((_ success:Bool, _ error: Error?)-> Void)?) {
         
-        if webView != nil {
+
+        if self.webView != nil {
             // WebView already enabled.
             return
         }
@@ -66,41 +69,19 @@ public class TealiumTagManagement : NSObject {
             completion?(false, TealiumTagManagementError.couldNotCreateURL)
             return
         }
+        self.webView = UIWebView()
+        self.webView?.delegate = self
+        self.webView?.loadRequest(request)
         
-        DispatchQueue.main.async {
+        self.completion = completion
 
-            self.webView = self.newWebView()
-            let _ = self.webView?.load(request)
-            completion?(true, nil)
-
-        }
-
-    }
-    
-    func newWebView() -> WKWebView {
-
-        let wv = WKWebView()
-        wv.navigationDelegate = self
-        wv.configuration.preferences.setValue(true, forKey: "developerExtrasEnabled")
-        
-        if self.areObservingWebView == false {
-            wv.addObserver(self, forKeyPath: TealiumTagManagementKey.estimatedProgress, options: .new, context: nil)
-            self.areObservingWebView = true
-        }
-
-        return wv
     }
     
     func disable() {
         
-        DispatchQueue.main.async {
-        
             self.webView?.stopLoading()
-            self.webView?.navigationDelegate = nil
             self.webView = nil
-            
-        }
-
+        
     }
     
     func track(_ data: [String:Any],
@@ -116,28 +97,16 @@ public class TealiumTagManagement : NSObject {
     
         let legacyType = TealiumTagManagement.getLegacyType(fromData: sanitizedData)
         let javascript = "utag.track(\'\(legacyType)\',\(encodedPayloadString))"
+        
         var info = [String:Any]()
         info[TealiumTagManagementKey.dispatchService] = TealiumTagManagementKey.moduleName
         info[TealiumTagManagementKey.jsCommand] = javascript
         info += [TealiumTagManagementKey.payload : data]
-        
-//        DispatchQueue.main.async {
-//
-//            self.webView?.evaluateJavaScript(javascript, completionHandler: nil)
-//            completion?(true, info, nil)
+        if let result = self.webView?.stringByEvaluatingJavaScript(from: javascript) {
+            info += [TealiumTagManagementKey.jsResult : result]
+        }
 
-            // Fine example of why label removals from completion handlers were such a great idea.
-            self.webView?.evaluateJavaScript(javascript, completionHandler: {(anything, error) in
-            
-                var result = ""
-                if anything != nil {
-                    result = "\(anything!)"
-                }
-                info += [TealiumTagManagementKey.jsResult : result]
-            
-                completion?(true, info, error)
-            })
-//        }
+        completion?(true, info, nil)
         
     }
     
@@ -180,17 +149,11 @@ public class TealiumTagManagement : NSObject {
             return false
         }
         
-        if self.webView!.estimatedProgress < 1.0 {
+        if didWebViewFinishLoading == false {
             return false
         }
-        
-        return true
-    }
     
-    deinit {
-        if areObservingWebView == true {
-            self.removeObserver(self, forKeyPath: TealiumTagManagementKey.estimatedProgress)
-        }
+        return true
     }
     
     // MARK: INTERNAL
@@ -234,45 +197,18 @@ public class TealiumTagManagement : NSObject {
     }
 }
 
-extension TealiumTagManagement : WKScriptMessageHandler {
+extension TealiumTagManagement : UIWebViewDelegate {
     
-    public func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+    public func webViewDidFinishLoad(_ webView: UIWebView) {
         
-        print("tm: usercontent: did receive:")
+        didWebViewFinishLoading = true
+        delegate?.TagManagementWebViewFinishedLoading()
+        self.completion?(true, nil)
     }
     
-}
-extension TealiumTagManagement : WKNavigationDelegate {
-    
-    public func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+    public func webView(_ webView: UIWebView, didFailLoadWithError error: Error) {
         
-        // Only gives response data for the initial utag.js call. Not the subsequent tag dispatches.
-        
-        decisionHandler(.allow)
-        
+        self.completion?(false, error)
     }
-    
-    public func webView(_ webView: WKWebView, decidePolicyFor navigationResponse: WKNavigationResponse, decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
-        
-        decisionHandler(.allow)
-    }
-    
-    public func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
-        
-    }
-    
-    public func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-        
-        
-    }
-    
-    public func webView(_ webView: WKWebView, didReceiveServerRedirectForProvisionalNavigation navigation: WKNavigation!) {
-        
-    }
-    
-    public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        
-        // WKNavigation doesn't actually hold any useful info.
-        
-    }
+
 }
