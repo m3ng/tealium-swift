@@ -10,29 +10,29 @@ import UIKit
 
 class MasterViewController: UITableViewController {
     
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        
-
-        let extraData : [String:Any] = ["Key" : "value"]
-
-        TealiumHelper.sharedInstance().track(title: "test",
-                                             data: extraData)
-    
-        
-    }
-    
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        
-        
-        let extraData : [String:Any] = ["screen_title" : "masterViewController",
-                                        "tealium_event_type" : "view"]
-        
-        TealiumHelper.sharedInstance().track(title: "view",
-                                             data: extraData)
-        
-    }
+//    override func viewDidLoad() {
+//        super.viewDidLoad()
+//        
+//
+//        let extraData : [String:Any] = ["Key" : "value"]
+//
+//        TealiumHelper.sharedInstance().track(title: "test",
+//                                             data: extraData)
+//    
+//        
+//    }
+//    
+//    override func viewWillAppear(_ animated: Bool) {
+//        super.viewWillAppear(animated)
+//        
+//        
+//        let extraData : [String:Any] = ["screen_title" : "masterViewController",
+//                                        "tealium_event_type" : "view"]
+//        
+//        TealiumHelper.sharedInstance().track(title: "view",
+//                                             data: extraData)
+//        
+//    }
     
     @IBAction func unwindInMaster(_ segue: UIStoryboardSegue)  {
         /*
