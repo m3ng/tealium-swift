@@ -6,7 +6,11 @@
 //  Copyright © 2016 Apple, Inc. All rights reserved.
 //
 
-import UIKit
+#if TEST
+    import Foundation
+#else
+    import UIKit
+#endif
 
 enum TealiumAutotrackingKey {
     static let moduleName = "autotracking"
@@ -15,7 +19,38 @@ enum TealiumAutotrackingKey {
     static let autotracked = "autotracked"
 }
 
+extension Tealium {
+    
+    public func autotracking() -> TealiumAutotracking? {
+        
+        guard let module = modulesManager.getModule(forName: TealiumAutotrackingKey.moduleName) as? TealiumAutotrackingModule else {
+            return nil
+        }
+        
+        return module.autotracking
+        
+    }
+    
+}
+
+
+public protocol TealiumAutotrackingDelegate {
+    
+    func autotrackShouldTrack(data: [String:Any]) -> Bool
+    func autotrackCompleted(success:Bool, info:[String:Any]?, error:Error?)
+    
+}
+
+public class TealiumAutotracking {
+    
+    var delegate : TealiumAutotrackingDelegate?
+    
+}
+
 class TealiumAutotrackingModule : TealiumModule {
+    
+    var notificationsEnabled = false
+    let autotracking = TealiumAutotracking()
     
     override func moduleConfig() -> TealiumModuleConfig {
         return TealiumModuleConfig(name: TealiumAutotrackingKey.moduleName,
@@ -32,13 +67,17 @@ class TealiumAutotrackingModule : TealiumModule {
         let viewName = NSNotification.Name.init(TealiumAutotrackingKey.viewNotificationName)
         NotificationCenter.default.addObserver(self, selector: #selector(requestViewTrack(sender:)), name: viewName, object: nil)
         
+        notificationsEnabled = true
         self.didFinishEnable(config: config)
         
     }
     
     override func disable() {
         
-        
+        if notificationsEnabled == true {
+            NotificationCenter.default.removeObserver(self)
+            notificationsEnabled = false
+        }
         
         self.didFinishDisable()
             
@@ -46,34 +85,49 @@ class TealiumAutotrackingModule : TealiumModule {
 
     @objc func requestEventTrack(sender: Notification) {
         
-        guard let view = sender.object as? UIView else {
+        if notificationsEnabled == false {
             return
         }
+    
+        var title = ""
+        if let object = sender.object {
+            title = String(describing: type(of: object))
+        }
         
-        let title = view.accessibilityIdentifier ??  String(describing: type(of: view))
         let data: [String : Any] = [TealiumKey.event: title ,
                                     TealiumKey.eventName: title ,
                                     TealiumKey.eventType: TealiumTrackType.activity.description(),
                                     TealiumAutotrackingKey.autotracked : "true",
                                     "was_tapped" : "true"]
         
+        if autotracking.delegate?.autotrackShouldTrack(data: data) == false {
+            return
+        }
+        
+        let completion : tealiumTrackCompletion = {(success, info, error) in
+            self.autotracking.delegate?.autotrackCompleted(success:success, info:info, error:error)
+        }
+        
         let track = TealiumTrack(data: data,
                                  info: [:],
-                                 completion: {(success, info, error) in
-                                    
-                                    print("\n*** TRACK COMPLETION HANDLER *** Track finished. Was successful:\(success)\n\n Info:\(info as AnyObject)")
-
-        })
+                                 completion: completion)
+        
         let process = TealiumProcess(type: .track,
                                      successful: true,
                                      track: track,
                                      error: nil)
         self.delegate?.tealiumModuleRequests(module: self, process: process)
-        
+
     }
     
     @objc func requestViewTrack(sender: Notification) {
         
+        if notificationsEnabled == false {
+            return
+        }
+        
+        #if TEST
+        #else
         guard let viewController = sender.object as? UIViewController else {
             return
         }
@@ -85,24 +139,33 @@ class TealiumAutotrackingModule : TealiumModule {
                                     TealiumAutotrackingKey.autotracked : "true",
                                     ]
         
+        if autotracking.delegate?.autotrackShouldTrack(data: data) == false {
+            return
+        }
+            
+            
+        let completion : tealiumTrackCompletion = {(success, info, error) in
+            self.autotracking.delegate?.autotrackCompleted(success:success, info:info, error:error)
+        }
         
         let track = TealiumTrack(data: data,
                                  info: [:],
-                                 completion: {(success, info, error) in
-        
-                                    print("\n*** TRACK COMPLETION HANDLER *** Track finished. Was successful:\(success)\n\n Info:\(info as AnyObject)")
-     
-        })
+                                 completion: completion)
+              
         let process = TealiumProcess(type: .track,
                                      successful: true,
                                      track: track,
                                      error: nil)
         self.delegate?.tealiumModuleRequests(module: self, process: process)
+        #endif
         
     }
     
     deinit {
-        NotificationCenter.default.removeObserver(self)
+        
+        if notificationsEnabled == true {
+            NotificationCenter.default.removeObserver(self)
+        }
     }
     
 }

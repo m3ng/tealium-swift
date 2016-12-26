@@ -16,6 +16,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
     func applicationDidFinishLaunching(_ application: UIApplication) {
         
-        let _ = TealiumHelper.sharedInstance()
+        let tealium = TealiumHelper.sharedInstance()
+        tealium.start()
+        
     }
 }

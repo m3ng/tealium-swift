@@ -27,6 +27,10 @@ class TealiumHelper : NSObject {
         tealium = Tealium(config: defaultTealiumConfig)
     }
     
+    func start() {
+        tealium.autotracking()?.delegate = self
+    }
+    
     func track(title: String, data:[String:Any]?) {
     
         tealium.track(title: title,
@@ -38,4 +42,22 @@ class TealiumHelper : NSObject {
         })
     }
     
+}
+
+extension TealiumHelper : TealiumAutotrackingDelegate {
+    
+    func autotrackShouldTrack(data: [String : Any]) -> Bool {
+        
+        if data["tealium_event_type"] as? String == "view" {
+            return false
+        }
+        
+        return true
+    }
+    
+    func autotrackCompleted(success: Bool, info: [String : Any]?, error: Error?) {
+        
+        print("\n*** AUTO TRACK COMPLETION HANDLER *** Track finished. Was successful:\(success)\n\n Info:\(info as AnyObject)")
+
+    }
 }
