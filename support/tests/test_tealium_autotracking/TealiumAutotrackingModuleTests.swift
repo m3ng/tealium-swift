@@ -12,6 +12,8 @@ class TealiumAutotrackingModuleTests: XCTestCase {
     
     var module : TealiumAutotrackingModule?
     var expectationRequest : XCTestExpectation?
+    var expectationShouldTrack : XCTestExpectation?
+    var expectationDidComplete : XCTestExpectation?
     var requestProcess : TealiumProcess?
     
     override func setUp() {
@@ -22,6 +24,8 @@ class TealiumAutotrackingModuleTests: XCTestCase {
     
     override func tearDown() {
         expectationRequest = nil
+        expectationDidComplete = nil
+        expectationShouldTrack = nil
         requestProcess = nil
         // Put teardown code here. This method is called after the invocation of each test method in the class.
         super.tearDown()
@@ -131,6 +135,25 @@ class TealiumAutotrackingModuleTests: XCTestCase {
         
         XCTAssertTrue(recievedData == data, "Mismatch between data expected: \n \(data as AnyObject) and data received post processing: \n \(recievedData as AnyObject)")
         
+    }
+    
+    func testRequestEventTrackDelegate() {
+        
+        module?.enable(config: testTealiumConfig)
+        module?.autotracking.delegate = self
+        
+        let testObject = TestObject()
+        
+        let notification = Notification(name: Notification.Name(rawValue: "com.tealium.autotracking.event"),
+                                        object: testObject,
+                                        userInfo: nil)
+        
+        expectationShouldTrack = expectation(description: "autotrackShouldTrack")
+        expectationDidComplete = expectation(description: "autotrackDidComplete")
+        
+        module?.requestEventTrack(sender: notification)
+        
+        waitForExpectations(timeout: 1.0, handler: nil)
         
     }
     
@@ -140,8 +163,6 @@ class TealiumAutotrackingModuleTests: XCTestCase {
     
 }
 
-
-
 extension TealiumAutotrackingModuleTests : TealiumModuleDelegate {
     
     func tealiumModuleFinished(module: TealiumModule, process: TealiumProcess) {
@@ -149,7 +170,9 @@ extension TealiumAutotrackingModuleTests : TealiumModuleDelegate {
     }
     
     func tealiumModuleRequests(module: TealiumModule, process: TealiumProcess) {
-     
+
+        // TODO: Info and error callback handling
+        process.track?.completion?(true, nil, nil)
         requestProcess = process
         expectationRequest?.fulfill()
         
@@ -157,6 +180,18 @@ extension TealiumAutotrackingModuleTests : TealiumModuleDelegate {
     
     func tealiumModuleFinishedReport(fromModule: TealiumModule, module: TealiumModule, process: TealiumProcess) {
         
+    }
+}
+
+extension TealiumAutotrackingModuleTests : TealiumAutotrackingDelegate {
+    
+    func tealiumAutotrackShouldTrack(data: [String : Any]) -> Bool {
+        expectationShouldTrack?.fulfill()
+        return true
+    }
+    
+    func tealiumAutotrackCompleted(success: Bool, info: [String : Any]?, error: Error?) {
+        expectationDidComplete?.fulfill()
     }
 }
 

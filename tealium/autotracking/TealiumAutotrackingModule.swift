@@ -36,8 +36,8 @@ extension Tealium {
 
 public protocol TealiumAutotrackingDelegate {
     
-    func autotrackShouldTrack(data: [String:Any]) -> Bool
-    func autotrackCompleted(success:Bool, info:[String:Any]?, error:Error?)
+    func tealiumAutotrackShouldTrack(data: [String:Any]) -> Bool
+    func tealiumAutotrackCompleted(success:Bool, info:[String:Any]?, error:Error?)
     
 }
 
@@ -100,12 +100,12 @@ class TealiumAutotrackingModule : TealiumModule {
                                     TealiumAutotrackingKey.autotracked : "true",
                                     "was_tapped" : "true"]
         
-        if autotracking.delegate?.autotrackShouldTrack(data: data) == false {
+        if autotracking.delegate?.tealiumAutotrackShouldTrack(data: data) == false {
             return
         }
         
         let completion : tealiumTrackCompletion = {(success, info, error) in
-            self.autotracking.delegate?.autotrackCompleted(success:success, info:info, error:error)
+            self.autotracking.delegate?.tealiumAutotrackCompleted(success:success, info:info, error:error)
         }
         
         let track = TealiumTrack(data: data,
@@ -116,6 +116,7 @@ class TealiumAutotrackingModule : TealiumModule {
                                      successful: true,
                                      track: track,
                                      error: nil)
+        
         self.delegate?.tealiumModuleRequests(module: self, process: process)
 
     }
