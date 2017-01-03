@@ -34,9 +34,9 @@ class TealiumHelper : NSObject {
                       completion: { (success, info, error) in
                         
             print("\n*** TRACK COMPLETION HANDLER *** Track finished. Was successful:\(success)\n\n Info:\(info as AnyObject)")
-                        if error != nil {
-            print("\n*** TRACK ERROR RETURNED: \(error)")
-                        }
+            if error != nil {
+                print("\n*** TRACK ERROR RETURNED: \(error)")
+            }
                         
         })
     }

@@ -27,6 +27,10 @@ enum TealiumTagManagementError : Error {
 
 extension Tealium {
     
+    // A lot of if elses as UIWebview, the primary element of TealiumTagManagement can not run in XCTests
+    
+    #if TEST
+    #else
     public func tagManagement() -> TealiumTagManagement? {
         
         guard let module = modulesManager.getModule(forName: TealiumTagManagementKey.moduleName) as? TealiumTagManagementModule else {
@@ -36,12 +40,15 @@ extension Tealium {
         return module.tagManagement
         
     }
-    
+    #endif
 }
 
 class TealiumTagManagementModule : TealiumModule {
     
+    #if TEST
+    #else
     var tagManagement = TealiumTagManagement()
+    #endif
     var queue = [TealiumTrack]()
 
     override func moduleConfig() -> TealiumModuleConfig {
@@ -58,6 +65,9 @@ class TealiumTagManagementModule : TealiumModule {
         let profile = config.profile
         let environment = config.environment
         
+        #if TEST
+            self.didFinishEnable(config: config)
+        #else
         DispatchQueue.main.async {
 
             self.tagManagement.delegate = self
@@ -75,21 +85,29 @@ class TealiumTagManagementModule : TealiumModule {
                                     
             })
         }
+        #endif
         
     }
     
     override func disable() {
         
+        #if TEST
+        #else
         DispatchQueue.main.async {
 
             self.tagManagement.disable()
 
         }
+        #endif
         didFinishDisable()
     }
     
     override func track(_ track: TealiumTrack) {
         
+        #if TEST
+        self.didFinishTrack(track)
+        #else
+
         DispatchQueue.main.async {
             
             self.addToQueue(track: track)
@@ -99,20 +117,24 @@ class TealiumTagManagementModule : TealiumModule {
                 self.didFinishTrack(track)
                 return
             }
-            
             self.sendQueue()
         }
+        #endif
+
     }
     
     func send(_ track: TealiumTrack) {
         
+        #if TEST
+        #else
         tagManagement.track(track.data,
                             completion:{(success, info, error) in
                                         
             track.completion?(success, info, error)
             self.didFinishTrack(track)
                                 
-        }) 
+        })
+        #endif
         
     }
     
@@ -138,6 +160,8 @@ class TealiumTagManagementModule : TealiumModule {
 
 }
 
+#if TEST
+#else
 extension TealiumTagManagementModule : TealiumTagManagementDelegate {
     
     func TagManagementWebViewFinishedLoading() {
@@ -150,3 +174,4 @@ extension TealiumTagManagementModule : TealiumTagManagementDelegate {
     }
     
 }
+#endif

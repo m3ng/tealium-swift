@@ -87,15 +87,15 @@ public class TealiumTagManagement : NSObject {
     func track(_ data: [String:Any],
                completion: ((_ success:Bool, _ info: [String:Any], _ error: Error?)->Void)?) {
     
-        let sanitizedData = TealiumTagManagement.sanitized(dictionary: data)
-        guard let encodedPayloadString = TealiumTagManagement.jsonEncode(sanitizedDictionary: sanitizedData) else {
+        let sanitizedData = TealiumTagManagementUtils.sanitized(dictionary: data)
+        guard let encodedPayloadString = TealiumTagManagementUtils.jsonEncode(sanitizedDictionary: sanitizedData) else {
             completion?(false,
                         ["original_payload":data, "sanitized_payload":sanitizedData],
                         TealiumTagManagementError.couldNotJSONEncodeData)
             return
         }
     
-        let legacyType = TealiumTagManagement.getLegacyType(fromData: sanitizedData)
+        let legacyType = TealiumTagManagementUtils.getLegacyType(fromData: sanitizedData)
         let javascript = "utag.track(\'\(legacyType)\',\(encodedPayloadString))"
         
         var info = [String:Any]()
@@ -108,15 +108,6 @@ public class TealiumTagManagement : NSObject {
 
         completion?(true, info, nil)
         
-    }
-    
-    class func getLegacyType(fromData: [String:Any]) -> String {
-        
-        var legacyType = "link"
-        if fromData[TealiumKey.eventType] as? String == TealiumTrackType.view.description() {
-            legacyType = "view"
-        }
-        return legacyType
     }
     
     override public func observeValue(forKeyPath keyPath: String?,
@@ -135,7 +126,6 @@ public class TealiumTagManagement : NSObject {
                 
             }
         }
-        
 
     }
     
@@ -156,45 +146,6 @@ public class TealiumTagManagement : NSObject {
         return true
     }
     
-    // MARK: INTERNAL
-    
-    internal class func jsonEncode(sanitizedDictionary:[String:String]) -> String? {
-        
-        do {
-            let jsonData = try JSONSerialization.data(withJSONObject: sanitizedDictionary,
-                                                             options: [])
-            let string = NSString(data: jsonData,
-                                  encoding: String.Encoding.utf8.rawValue)
-            return string as String?
-        } catch {
-            return nil
-        }
-    }
-    
-    /**
-     Stringifies dictionary values
-     */
-    internal class func sanitized(dictionary:[String:Any]) -> [String:String]{
-        
-        var clean = [String: String]()
-        
-        for (key, value) in dictionary {
-            
-            if value is String {
-                
-                clean[key] = value as? String
-                
-            } else {
-                
-                let stringified = "\(value)"
-                clean[key] = stringified as String?
-            }
-            
-        }
-        
-        return clean
-        
-    }
 }
 
 extension TealiumTagManagement : UIWebViewDelegate {

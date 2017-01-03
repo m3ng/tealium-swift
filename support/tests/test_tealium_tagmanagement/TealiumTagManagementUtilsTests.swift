@@ -10,7 +10,7 @@ import XCTest
 
 
 /// Can only test class level functions due to limitation of XCTest with WebViews
-class TealiumTagManagementTests: XCTestCase {
+class TealiumTagManagementUtilsTests: XCTestCase {
     
     override func setUp() {
         super.setUp()
@@ -21,35 +21,13 @@ class TealiumTagManagementTests: XCTestCase {
         //
         super.tearDown()
     }
-
-    // WebViews can not yet be tested by XCTest
-//    func testEnableDisable() {
-//     
-//        expectationSuccess = self.expectation(description: "enable")
-//        tagManagement?.enable(forAccount: "test",
-//                              profile: "test",
-//                              environment: "test",
-//                              completion: { (success, error) in
-//                                
-//                                XCTAssertTrue(success)
-//                                XCTAssertTrue(error == nil, "Unknown error returned: \(error)")
-//                                self.expectationSuccess?.fulfill()
-//        })
-//        
-//        self.waitForExpectation
-//
-//        tagManagement?.disable()
-//        
-//        XCTAssertTrue(tagManagement?.webView == nil, "Webview still available.")
-//        
-//    }
     
     func testGetLegacyTypeView() {
 
         let eventType = "tealium_event_type"
         let viewValue = "view"
         let viewDictionary = [eventType:viewValue]
-        let viewResult = TealiumTagManagement.getLegacyType(fromData: viewDictionary)
+        let viewResult = TealiumTagManagementUtils.getLegacyType(fromData: viewDictionary)
         
         XCTAssertTrue(viewResult == viewValue)
         
@@ -60,7 +38,7 @@ class TealiumTagManagementTests: XCTestCase {
         let eventType = "tealium_event_type"
         let anyValue = "any"
         let eventDictionary = [eventType:anyValue]
-        let eventResult = TealiumTagManagement.getLegacyType(fromData: eventDictionary)
+        let eventResult = TealiumTagManagementUtils.getLegacyType(fromData: eventDictionary)
         
         XCTAssertTrue(eventResult == "link")
         
@@ -68,7 +46,7 @@ class TealiumTagManagementTests: XCTestCase {
     
     func testJSONEncode(){
         
-        let data = TealiumTagManagement.jsonEncode(sanitizedDictionary: ["abc":"123"])
+        let data = TealiumTagManagementUtils.jsonEncode(sanitizedDictionary: ["abc":"123"])
         
         let dataString = "\(data!)"
         
@@ -86,7 +64,7 @@ class TealiumTagManagementTests: XCTestCase {
                              "arrayOfBools" : [true, false, true],
                              "arrayOfMixedElements": [1, "two", 3.00]] as [String : Any]
         
-        let sanitized = TealiumTagManagement.sanitized(dictionary: rawDictionary)
+        let sanitized = TealiumTagManagementUtils.sanitized(dictionary: rawDictionary)
         
         print("Sanitized Dictionary: \(sanitized as AnyObject)")
         
