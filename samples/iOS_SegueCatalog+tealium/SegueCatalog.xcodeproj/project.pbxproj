@@ -74,7 +74,7 @@
 		7142404D1E0B066A007D6651 /* TealiumAutotrackingModule.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TealiumAutotrackingModule.swift; sourceTree = "<group>"; };
 		71A28E7E1DE61841006B6F0D /* TealiumHelper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TealiumHelper.swift; path = ../../TealiumHelper.swift; sourceTree = "<group>"; };
 		71A9E6761E0313C6008DB2CD /* TealiumAsyncModule.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TealiumAsyncModule.swift; sourceTree = "<group>"; };
-		71DA9DEB1E0BB5FD00A4A6DD /* Tealium-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Tealium-Bridging-Header.h"; sourceTree = "<group>"; };
+		71DA9DEB1E0BB5FD00A4A6DD /* Tealium-Autotracking-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Tealium-Autotracking-Bridging-Header.h"; sourceTree = "<group>"; };
 		71DA9DEC1E0BB5FE00A4A6DD /* UIApplication+TealiumTracker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIApplication+TealiumTracker.h"; sourceTree = "<group>"; };
 		71DA9DED1E0BB5FE00A4A6DD /* UIApplication+TealiumTracker.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIApplication+TealiumTracker.m"; sourceTree = "<group>"; };
 		71DA9DEF1E0BBBCD00A4A6DD /* UIViewController+TealiumTracker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIViewController+TealiumTracker.h"; sourceTree = "<group>"; };
@@ -207,7 +207,7 @@
 				71DA9DED1E0BB5FE00A4A6DD /* UIApplication+TealiumTracker.m */,
 				71DA9DEF1E0BBBCD00A4A6DD /* UIViewController+TealiumTracker.h */,
 				71DA9DF01E0BBBCD00A4A6DD /* UIViewController+TealiumTracker.m */,
-				71DA9DEB1E0BB5FD00A4A6DD /* Tealium-Bridging-Header.h */,
+				71DA9DEB1E0BB5FD00A4A6DD /* Tealium-Autotracking-Bridging-Header.h */,
 			);
 			path = autotracking;
 			sourceTree = "<group>";
@@ -521,7 +521,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.example.apple-samplecode.SegueCatalog";
 				PRODUCT_NAME = SegueCatalog;
-				SWIFT_OBJC_BRIDGING_HEADER = "../../tealium/autotracking/Tealium-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "../../tealium/autotracking/Tealium-Autotracking-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 3.0;
 			};
@@ -539,7 +539,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.example.apple-samplecode.SegueCatalog";
 				PRODUCT_NAME = SegueCatalog;
-				SWIFT_OBJC_BRIDGING_HEADER = "../../tealium/autotracking/Tealium-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "../../tealium/autotracking/Tealium-Autotracking-Bridging-Header.h";
 				SWIFT_VERSION = 3.0;
 			};
 			name = Release;

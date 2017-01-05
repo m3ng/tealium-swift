@@ -100,24 +100,7 @@ class TealiumAutotrackingModule : TealiumModule {
                                     TealiumAutotrackingKey.autotracked : "true",
                                     "was_tapped" : "true"]
         
-        if autotracking.delegate?.tealiumAutotrackShouldTrack(data: data) == false {
-            return
-        }
-        
-        let completion : tealiumTrackCompletion = {(success, info, error) in
-            self.autotracking.delegate?.tealiumAutotrackCompleted(success:success, info:info, error:error)
-        }
-        
-        let track = TealiumTrack(data: data,
-                                 info: [:],
-                                 completion: completion)
-        
-        let process = TealiumProcess(type: .track,
-                                     successful: true,
-                                     track: track,
-                                     error: nil)
-        
-        self.delegate?.tealiumModuleRequests(module: self, process: process)
+        requestTrack(data: data)
 
     }
     
@@ -139,26 +122,31 @@ class TealiumAutotrackingModule : TealiumModule {
                                     TealiumKey.eventType: TealiumTrackType.view.description(),
                                     TealiumAutotrackingKey.autotracked : "true",
                                     ]
+
+        requestTrack(data: data)
+        #endif
         
-        if autotracking.delegate?.autotrackShouldTrack(data: data) == false {
+    }
+    
+    func requestTrack(data: [String:Any]) {
+        
+        if autotracking.delegate?.tealiumAutotrackShouldTrack(data: data) == false {
             return
         }
-            
-            
+        
         let completion : tealiumTrackCompletion = {(success, info, error) in
-            self.autotracking.delegate?.autotrackCompleted(success:success, info:info, error:error)
+            self.autotracking.delegate?.tealiumAutotrackCompleted(success:success, info:info, error:error)
         }
         
         let track = TealiumTrack(data: data,
                                  info: [:],
                                  completion: completion)
-              
+        
         let process = TealiumProcess(type: .track,
                                      successful: true,
                                      track: track,
                                      error: nil)
         self.delegate?.tealiumModuleRequests(module: self, process: process)
-        #endif
         
     }
     

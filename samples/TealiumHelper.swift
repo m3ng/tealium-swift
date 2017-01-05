@@ -46,16 +46,17 @@ class TealiumHelper : NSObject {
 
 extension TealiumHelper : TealiumAutotrackingDelegate {
     
-    func autotrackShouldTrack(data: [String : Any]) -> Bool {
-        
-        if data["tealium_event_type"] as? String == "view" {
-            return false
-        }
+    func tealiumAutotrackShouldTrack(data: [String : Any]) -> Bool {
+
+        // Example of suppressing all view appearances
+//        if data["tealium_event_type"] as? String == "view" {
+//            return false
+//        }
         
         return true
     }
     
-    func autotrackCompleted(success: Bool, info: [String : Any]?, error: Error?) {
+    func tealiumAutotrackCompleted(success: Bool, info: [String : Any]?, error: Error?) {
         
         print("\n*** AUTO TRACK COMPLETION HANDLER *** Track finished. Was successful:\(success)\n\n Info:\(info as AnyObject)")
 
