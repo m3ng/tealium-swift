@@ -31,7 +31,7 @@ open class TealiumConfig {
     let account : String
     let profile : String
     let environment : String
-    open var optionalData : [String:Any]?
+    lazy var optionalData = [String:Any]()
     
     /**
      Primary constructor.
@@ -50,7 +50,10 @@ open class TealiumConfig {
         self.account = account
         self.environment = environment
         self.profile = profile
-        self.optionalData = optionalData
+        
+        if let optionalData = optionalData {
+            self.optionalData = optionalData
+        }
         
     }
     
@@ -59,7 +62,7 @@ open class TealiumConfig {
      */
     @available(*, deprecated, message:"Access optional data property directly.")
     public func getOptionalData(key: String) -> Any? {
-        return optionalData?[key]
+        return optionalData[key]
     }
     
     /**
@@ -67,9 +70,6 @@ open class TealiumConfig {
      */
     @available(*, deprecated, message:"Set optional data property directly.")
     public func setOptionalData(key: String, value: Any) {
-        if optionalData == nil {
-            optionalData = [String: Any]()
-        }
-        optionalData?[key] = value
+        optionalData[key] = value
     }
 }

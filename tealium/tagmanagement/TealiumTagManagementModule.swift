@@ -1,6 +1,5 @@
 //
 //  TealiumTagManagement.swift
-//  SegueCatalog
 //
 //  Created by Jason Koo on 12/14/16.
 //  Copyright © 2016 Apple, Inc. All rights reserved.
@@ -10,12 +9,17 @@ import Foundation
 
 enum TealiumTagManagementKey {
     static let estimatedProgress = "estimatedProgress"
+    static let maxQueueSize = "queue_size"
     static let moduleName = "tagmanagement"
     static let payload = "payload"
     static let responseHeader = "response_headers"
     static let dispatchService = "dispatch_service"
     static let jsCommand = "js_command"
     static let jsResult = "js_result"
+}
+
+enum TealiumTagManagementValue {
+    static let defaultQueueSize = 100
 }
 
 enum TealiumTagManagementError : Error {
@@ -25,12 +29,23 @@ enum TealiumTagManagementError : Error {
     case webViewNotYetReady
 }
 
+
+extension TealiumConfig {
+    
+    func setTagManagementQueueSize(to: Int) {
+
+        optionalData[TealiumTagManagementKey.maxQueueSize] = to
+        
+    }
+    
+}
+
+// A lot of if elses as UIWebview, the primary element of TealiumTagManagement can not run in XCTests
+
+#if TEST
+#else
 extension Tealium {
     
-    // A lot of if elses as UIWebview, the primary element of TealiumTagManagement can not run in XCTests
-    
-    #if TEST
-    #else
     public func tagManagement() -> TealiumTagManagement? {
         
         guard let module = modulesManager.getModule(forName: TealiumTagManagementKey.moduleName) as? TealiumTagManagementModule else {
@@ -40,16 +55,30 @@ extension Tealium {
         return module.tagManagement
         
     }
-    #endif
 }
+#endif
 
 class TealiumTagManagementModule : TealiumModule {
     
-    #if TEST
-    #else
-    var tagManagement = TealiumTagManagement()
-    #endif
+    // Queue for staging calls to this dispatch service, as initial calls
+    // likely to incoming before webView is ready.
     var queue = [TealiumTrack]()
+    
+    /// Overridable completion handler for module send command.
+    var sendCompletion : (TealiumTagManagementModule, TealiumTrack) -> Void = { (_ module:TealiumTagManagementModule, _ track:TealiumTrack) in
+    
+        #if TEST
+        #else
+            // Default behavior
+            module.tagManagement.track(track.data,
+                       completion:{(success, info, error) in
+                        
+                track.completion?(success, info, error)
+                module.didFinishTrack(track)
+                        
+            })
+        #endif
+    }
 
     override func moduleConfig() -> TealiumModuleConfig {
         return TealiumModuleConfig(name: TealiumTagManagementKey.moduleName,
@@ -58,19 +87,20 @@ class TealiumTagManagementModule : TealiumModule {
                                    enabled: true)
     }
     
+    #if TEST
+    #else
+    var tagManagement = TealiumTagManagement()
+
     override func enable(config: TealiumConfig) {
         
         // TODO: Check if Tag Management should be enabled.
         let account = config.account
         let profile = config.profile
         let environment = config.environment
-        
-        #if TEST
-            self.didFinishEnable(config: config)
-        #else
+
         DispatchQueue.main.async {
 
-            self.tagManagement.delegate = self
+            self.tagManagement.internalDelegate = self
             self.tagManagement.enable(forAccount: account,
                                  profile: profile,
                                  environment: environment,
@@ -85,28 +115,20 @@ class TealiumTagManagementModule : TealiumModule {
                                     
             })
         }
-        #endif
         
     }
-    
+
     override func disable() {
         
-        #if TEST
-        #else
         DispatchQueue.main.async {
 
             self.tagManagement.disable()
 
         }
-        #endif
         didFinishDisable()
     }
-    
+
     override func track(_ track: TealiumTrack) {
-        
-        #if TEST
-        self.didFinishTrack(track)
-        #else
 
         DispatchQueue.main.async {
             
@@ -119,24 +141,10 @@ class TealiumTagManagementModule : TealiumModule {
             }
             self.sendQueue()
         }
-        #endif
 
     }
-    
-    func send(_ track: TealiumTrack) {
-        
-        #if TEST
-        #else
-        tagManagement.track(track.data,
-                            completion:{(success, info, error) in
-                                        
-            track.completion?(success, info, error)
-            self.didFinishTrack(track)
-                                
-        })
-        #endif
-        
-    }
+    #endif
+
     
     // MARK: INTERNAL
     
@@ -150,7 +158,7 @@ class TealiumTagManagementModule : TealiumModule {
         
         for track in queueCopy{
         
-            send(track)
+            sendCompletion(self, track)
             
             queue.removeFirst()
         
@@ -164,7 +172,7 @@ class TealiumTagManagementModule : TealiumModule {
 #else
 extension TealiumTagManagementModule : TealiumTagManagementDelegate {
     
-    func TagManagementWebViewFinishedLoading() {
+    func tagManagementWebViewFinishedLoading() {
         
         DispatchQueue.main.async {
             

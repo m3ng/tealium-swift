@@ -1,6 +1,5 @@
 //
 //  TealiumTagManagement.swift
-//  SegueCatalog
 //
 //  Created by Jason Koo on 12/14/16.
 //  Copyright © 2016 Apple, Inc. All rights reserved.
@@ -8,24 +7,35 @@
 
 import UIKit
 
-protocol TealiumTagManagementDelegate {
-    
-    func TagManagementWebViewFinishedLoading()
-    
+
+/// Public delegate
+protocol TealiumWebViewDelegate {
+
+    func tealiumWebViewDidFinishLoading(webView:UIWebView)
+    func tealiumWebViewDidFailToLoad(webView:UIWebView, error:Error)
 }
 
+
+/// Internal Module delegate
+protocol TealiumTagManagementDelegate {
+    
+    func tagManagementWebViewFinishedLoading()
+}
+
+
+/// TIQ Supported dispatch service Module.
 public class TealiumTagManagement : NSObject {
     
     static let defaultUrlStringPrefix = "https://tags.tiqcdn.com/utag"
 
     var webView : UIWebView?
     var didWebViewFinishLoading = false
-    var areObservingWebView = false
     var account : String = ""
     var profile : String = ""
     var environment : String = ""
     var urlString : String?
-    var delegate : TealiumTagManagementDelegate?
+    var delegate : TealiumWebViewDelegate?
+    var internalDelegate : TealiumTagManagementDelegate?
     var completion : ((Bool, Error?)->Void)?
     
     lazy var defaultUrlString : String = {
@@ -77,6 +87,7 @@ public class TealiumTagManagement : NSObject {
 
     }
     
+    /// Disable the webview system.
     func disable() {
         
             self.webView?.stopLoading()
@@ -84,6 +95,12 @@ public class TealiumTagManagement : NSObject {
         
     }
     
+    
+    /// Process event data for UTAG delivery.
+    ///
+    /// - Parameters:
+    ///   - data: [String:Any] Dictionary of preferrably String or [String] values.
+    ///   - completion: Optional completion handler to call when call completes.
     func track(_ data: [String:Any],
                completion: ((_ success:Bool, _ info: [String:Any], _ error: Error?)->Void)?) {
     
@@ -110,25 +127,10 @@ public class TealiumTagManagement : NSObject {
         
     }
     
-    override public func observeValue(forKeyPath keyPath: String?,
-                                      of object: Any?,
-                                      change: [NSKeyValueChangeKey : Any]?,
-                                      context: UnsafeMutableRawPointer?) {
-        
-        if keyPath == TealiumTagManagementKey.estimatedProgress {
-            guard let newValue = change?[NSKeyValueChangeKey.newKey] else {
-                return
-            }
-            if newValue as? Double == 1.0 ||
-                newValue as? Int == 1 {
-                
-                delegate?.TagManagementWebViewFinishedLoading()
-                
-            }
-        }
-
-    }
     
+    /// Internal webview status check.
+    ///
+    /// - Returns: Bool indicating whether or not the internal webview is ready for dispatching.
     func isWebViewReady() -> Bool {
         
         if self.webView == nil {
@@ -153,12 +155,14 @@ extension TealiumTagManagement : UIWebViewDelegate {
     public func webViewDidFinishLoad(_ webView: UIWebView) {
         
         didWebViewFinishLoading = true
-        delegate?.TagManagementWebViewFinishedLoading()
+        internalDelegate?.tagManagementWebViewFinishedLoading()
+        delegate?.tealiumWebViewDidFinishLoading(webView: webView)
         self.completion?(true, nil)
     }
     
     public func webView(_ webView: UIWebView, didFailLoadWithError error: Error) {
         
+        delegate?.tealiumWebViewDidFailToLoad(webView: webView, error: error)
         self.completion?(false, error)
     }
 

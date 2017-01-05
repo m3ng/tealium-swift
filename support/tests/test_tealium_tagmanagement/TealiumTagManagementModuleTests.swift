@@ -38,24 +38,31 @@ class TealiumTagManagementModuleTests: XCTestCase {
         
         module = TealiumTagManagementModule(delegate: self)
 
+        let expectationQueueSend = expectation(description: "queueSend")
+        
         let testTrack = TealiumTrack(data: [:],
                                      info: nil,
                                      completion: {(success, info, error) in
         
+                expectationQueueSend.fulfill()
         })
         
+        module?.sendCompletion = {(module, track) in
+        
+            track.completion?(true, nil, nil)
+            
+        }
         
         module?.addToQueue(track: testTrack)
         
         module?.sendQueue()
         
-        delegateExpectationSuccess = expectation(description: "track")
-
         waitForExpectations(timeout: 1.0, handler: nil)
 
         XCTAssertTrue(module?.queue.isEmpty == true)
 
     }
+    
 }
 
 
